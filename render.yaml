@@ -1,11 +1,11 @@
 services:
   - type: web
-    name: prefix-logic
+    name: braille-flask-app
     env: docker
-    repo: https://github.com/Prakash0062/prefix-logic.git
-    branch: main
     plan: free
     region: oregon
-    healthCheckPath: /
-    dockerfilePath: Dockerfile
+    dockerfilePath: ./Dockerfile
     autoDeploy: true
+    envVars:
+      - key: FLASK_ENV
+        value: production
