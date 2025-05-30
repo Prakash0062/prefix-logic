@@ -1,8 +1,8 @@
 services:
   - type: web
-    name: braille-assistive-app-iitbhu
+    name: prefix-logic
     env: docker
-    repo: https://github.com/asad8210/imagetextassistivereader.git
+    repo: https://github.com/Prakash0062/prefix-logic.git
     branch: main
     plan: free
     region: oregon
