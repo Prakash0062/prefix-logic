@@ -4,4 +4,4 @@ pytesseract==0.3.10
 gTTS==2.3.0
 Werkzeug==2.3.7
 gunicorn<=20
-langdetect
+langdetect==1.0.9
