@@ -6,18 +6,19 @@ import pytesseract
 from gtts import gTTS
 from langdetect import detect
 
-
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
 app = Flask(__name__)
 
+# Configure upload and audio folders
 UPLOAD_FOLDER = 'static/uploads'
 AUDIO_FOLDER = 'static/audio'
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(AUDIO_FOLDER, exist_ok=True)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['AUDIO_FOLDER'] = AUDIO_FOLDER
 
+# Braille character map for English and Hindi
 braille_map = {
     'a': '⠁', 'b': '⠃', 'c': '⠉', 'd': '⠙', 'e': '⠑',
     'f': '⠋', 'g': '⠛', 'h': '⠓', 'i': '⠊', 'j': '⠚',
@@ -27,6 +28,7 @@ braille_map = {
     'z': '⠵',
     ' ': ' ', '\n': '\n', ',': '⠂', '.': '⠲', '?': '⠦', '!': '⠖',
 
+    # Hindi vowels, consonants, and other signs
     "अ": "⠁", "आ": "⠡", "इ": "⠊", "ई": "⠒", "उ": "⠥",
     "ऊ": "⠳", "ए": "⠑", "ऐ": "⠣", "ओ": "⠕", "औ": "⠷",
     "ऋ": "⠗", "क": "⠅", "ख": "⠩", "ग": "⠛", "घ": "⠣",
@@ -67,20 +69,22 @@ def index():
 
 @app.route('/process', methods=['POST'])
 def process():
-    if 'image' not in request.files or request.files['image'].filename == '':
+    if 'image' not in request.files:
         return redirect(url_for('index'))
 
     file = request.files['image']
+    if file.filename == '':
+        return redirect(url_for('index'))
+
     filename = secure_filename(file.filename)
     image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(image_path)
 
-    try:
-        img = Image.open(image_path)
-        extracted_text = pytesseract.image_to_string(img, lang='hin+eng')
-    except Exception as e:
-        return f"OCR Error: {str(e)}"
+    # OCR for Hindi + English
+    img = Image.open(image_path)
+    extracted_text = pytesseract.image_to_string(img, lang='hin+eng')
 
+    # Language detection
     try:
         detected_lang = detect(extracted_text)
     except:
@@ -88,17 +92,19 @@ def process():
 
     gtts_lang = 'hi' if detected_lang == 'hi' else 'en'
 
-    braille_prefix = '⠰⠓ ' if detected_lang == 'hi' else '⠰⠑ '
+    # Braille translation with language prefix
     braille_text_body = text_to_braille(extracted_text)
+    if detected_lang == 'hi':
+        braille_prefix = '⠰⠓ '  # Hindi
+    else:
+        braille_prefix = '⠰⠑ '  # English
     braille_text = braille_prefix + braille_text_body
 
-    try:
-        tts = gTTS(text=extracted_text, lang=gtts_lang)
-        audio_filename = filename.rsplit('.', 1)[0] + '.mp3'
-        audio_path = os.path.join(app.config['AUDIO_FOLDER'], audio_filename)
-        tts.save(audio_path)
-    except Exception as e:
-        return f"Text-to-Speech Error: {str(e)}"
+    # Convert to audio
+    tts = gTTS(text=extracted_text, lang=gtts_lang)
+    audio_filename = filename.rsplit('.', 1)[0] + '.mp3'
+    audio_path = os.path.join(app.config['AUDIO_FOLDER'], audio_filename)
+    tts.save(audio_path)
 
     return render_template('result.html',
                            original_image=f'uploads/{filename}',
@@ -107,4 +113,4 @@ def process():
                            audio_file=f'audio/{audio_filename}')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)
