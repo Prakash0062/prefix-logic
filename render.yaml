@@ -1,11 +1,12 @@
 services:
   - type: web
-    name: braille-flask-app
-    env: docker
+    name: braille-ocr-app
+    env: python
     plan: free
-    region: oregon
-    dockerfilePath: ./Dockerfile
-    autoDeploy: true
+    buildCommand: |
+      pip install -r requirements.txt
+      ./build.sh
+    startCommand: python app.py
     envVars:
       - key: FLASK_ENV
         value: production
