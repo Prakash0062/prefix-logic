@@ -1,5 +1,5 @@
 FROM python:3.9.8-slim
-
+RUN apt-get update && apt-get install -y tesseract-ocr
 # Set the working directory in the container
 WORKDIR /app
 
